@@ -34,7 +34,12 @@ RSpec.describe "Admin Power Users", type: :system do
 
         # ensure all roles are listed
         Role.distinct.pluck(:name).each do |role|
-          expect(page).to have_text role
+          role_name = role
+          if Rails.application.config.x.covidliste["admin_roles"].include? :"#{role}"
+            role_config = Rails.application.config.x.covidliste["admin_roles"][:"#{role}"]
+            role_name = role_config[:name] || role_name
+          end
+          expect(page).to have_text role_name
         end
       end
     end

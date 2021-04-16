@@ -74,12 +74,22 @@ class User < ApplicationRecord
     confirmed_at.present?
   end
 
-  def super_admin?
-    has_role?(:super_admin)
+  # Generates all role? methods where role is a role_name from config/covidliste.yml
+  Rails.application.config.x.covidliste["admin_roles"].each do |role_name, role_config|
+    define_method(:"#{role_name}?") do
+      parent_role = role_config[:parent_role]
+      if parent_role.nil?
+        has_role?(:"#{role_name}")
+      else
+        has_role?(:"#{role_name}") || public_send("#{parent_role}?")
+      end
+    end
   end
 
-  def admin?
-    has_role?(:admin) || super_admin?
+  def volunteer?
+    Rails.application.config.x.covidliste["admin_roles"].each do |role_name, role_config|
+      return true if has_role?(:"#{role_name}")
+    end
   end
 
   def anonymize!

@@ -1,23 +1,68 @@
 <div class="container">
   <h2 class="my-5" id="page-title">
-    Utilisateurs avec privilèges
+    Utilisateurs bénévoles avec privilèges
   </h2>
 
   <div class="table-responsive">
     <table class="table table-bordered table-hover" aria-describedby="users with roles">
       <thead class="thead-light">
         <tr>
-          <th scope="col">email</th>
-          <th scope="col">roles</th>
+          <th scope="col">Nom</th>
+          <th scope="col">
+            Roles
+            <span class="ml-3">
+              (
+              Légende :
+              <span class="badge badge-primary">
+                Possédé
+              </span>
+              <span class="badge badge-info">
+                Hérité
+              </span>
+              <span class="badge badge-secondary">
+                Non possédé
+              </span>
+              <span class="badge badge-danger">
+                Possédé mais inconnu
+              </span>
+              )
+            </span>
+          </th>
         </tr>
       </thead>
       <tbody>
         <% @users.each do |user| %>
           <tr>
-            <td><%= user.email %></td>
             <td>
-              <% user.roles.pluck(:name).each do |role| %>
-                <span class="badge badge-info text-larger"><%= role %></span>
+              <%= user.full_name %><br />
+              <%= user.email %>
+            </td>
+            <td>
+              <% Rails.application.config.x.covidliste["admin_roles"].each do |role_name, role_config| %>
+                <% if user.roles.pluck(:name).include? "#{role_name}"  %>
+                  <span class="badge badge-primary" data-toggle="tooltip" data-placement="top"
+                        title="<%= role_name %> (possédé)">
+                    <%= role_config[:name] || role_name %>
+                  </span>
+                <% elsif user.public_send("#{role_name}?") %>
+                  <span class="badge badge-info" data-toggle="tooltip" data-placement="top"
+                        title="<%= role_name %> (hérité)">
+                    <%= role_config[:name] || role_name %>
+                  </span>
+                <% else %>
+                  <span class="badge badge-secondary" data-toggle="tooltip" data-placement="top"
+                        title="<%= role_name %> (non possédé)">
+                    <%= role_config[:name] || role_name %>
+                  </span>
+                <% end %>
+              <% end %>
+              <% user.roles.pluck(:name).each do |role_name| %>
+                <% unless Rails.application.config.x.covidliste["admin_roles"].include? :"#{role_name}"  %>
+                  <span class="badge badge-danger" data-toggle="tooltip" data-placement="top"
+                        title="<%= role_name %> (possédé inconnu)">
+                    <%= role_name %>
+                  </span>
+                <% end %>
               <% end %>
             </td>
           </tr>

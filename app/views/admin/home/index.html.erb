@@ -1,6 +1,6 @@
 <div class="container">
   <h2 class="mt-4">
-    Espace admin
+    Espace bénévoles
   </h2>
 
   <p class="mt-4">
@@ -14,11 +14,29 @@
   </p>
 
   <div class="mt-4">
-    Vous possèdez les rôles suivants :
+    Vous possèdez les rôles/accès suivants :
     <% if current_user.roles.any? %>
-      <ul>
-        <% current_user.roles.each do |role| %>
-          <li><%= role.name %></li>
+      <ul class="mt-2">
+        <% Rails.application.config.x.covidliste["admin_roles"].each do |role_name, role_config| %>
+          <% if current_user.roles.pluck(:name).include? "#{role_name}"  %>
+            <span class="badge badge-primary" data-toggle="tooltip" data-placement="top"
+                  title="<%= role_name %> (possédé)">
+              <%= role_config[:name] || role_name %>
+            </span>
+          <% elsif current_user.public_send("#{role_name}?") %>
+            <span class="badge badge-info" data-toggle="tooltip" data-placement="top"
+                  title="<%= role_name %> (hérité)">
+              <%= role_config[:name] || role_name %>
+            </span>
+          <% end %>
+        <% end %>
+        <% current_user.roles.pluck(:name).each do |role_name| %>
+          <% unless Rails.application.config.x.covidliste["admin_roles"].include? :"#{role_name}"  %>
+            <span class="badge badge-danger" data-toggle="tooltip" data-placement="top"
+                  title="<%= role_name %> (possédé inconnu)">
+              <%= role_name %>
+            </span>
+          <% end %>
         <% end %>
       </ul>
     <% else %>

@@ -2,31 +2,33 @@ require "sidekiq/web"
 
 Rails.application.routes.draw do
   namespace :admin do
-    get "/" => "home#index"
-    # Admins
-    authenticate :user, lambda(&:admin?) do
-      get "/stats" => "stats#stats"
-      post "/stats" => "stats#stats"
-      resources :vaccination_centers do
-        patch :validate, on: :member
-        patch :disable, on: :member
-        patch :enable, on: :member
-        post :add_partner, on: :member
-      end
-      resources :users, only: [:index, :destroy] do
-        post :resend_confirmation, on: :member
-      end
-      resources :power_users, only: [:index]
+    authenticate :user, lambda(&:volunteer?) do
+      get "/" => "home#index"
+      # Admins
+      authenticate :user, lambda(&:admin?) do
+        get "/stats" => "stats#stats"
+        post "/stats" => "stats#stats"
+        resources :vaccination_centers do
+          patch :validate, on: :member
+          patch :disable, on: :member
+          patch :enable, on: :member
+          post :add_partner, on: :member
+        end
+        resources :users, only: [:index, :destroy] do
+          post :resend_confirmation, on: :member
+        end
+        resources :power_users, only: [:index]
 
-      # admin tools
-      mount Blazer::Engine, at: "/blazer"
-      mount Flipper::UI.app(Flipper), at: "/flipper"
+        # admin tools
+        mount Blazer::Engine, at: "/blazer"
+        mount Flipper::UI.app(Flipper), at: "/flipper", as: :flipper_ui
+      end
+
+      authenticate :user, lambda(&:super_admin?) do
+        mount PgHero::Engine, at: "/pghero"
+        mount Sidekiq::Web => "/sidekiq"
+      end
     end
-  end
-
-  authenticate :user, lambda(&:super_admin?) do
-    mount PgHero::Engine, at: "admin/pghero"
-    mount Sidekiq::Web => "admin/sidekiq"
   end
 
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?

@@ -32,4 +32,12 @@ class Partner < ApplicationRecord
   def full_name
     name
   end
+
+  def to_csv
+    columns = %w[created_at updated_at email name phone_number]
+    CSV.generate(headers: true) do |csv|
+      csv << columns
+      csv << columns.map { |column| send(column) }
+    end
+  end
 end

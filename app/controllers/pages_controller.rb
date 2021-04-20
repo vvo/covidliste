@@ -1,5 +1,6 @@
 class PagesController < ApplicationController
   def benevoles
+    @volunteers = Volunteer.where(anon: false).where.not(picture: "").order(firstname: :asc) + Volunteer.where(anon: false).where(picture: "").order(firstname: :asc) + Volunteer.where(anon: true)
   end
 
   def contact
